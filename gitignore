@@ -1,0 +1,13 @@
+# Build artifacts
+*.o
+*.out
+*.bin
+*.elf
+*.map
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# If you decide NOT to use submodules and just want to hide the folder:
+# FreeRTOS/
