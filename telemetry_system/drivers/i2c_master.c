@@ -1,14 +1,8 @@
-#include <fcntl.h>      // For open()
-#include <unistd.h>     // For read(), write(), close()
-#include <sys/ioctl.h>  // For ioctl()
-#include <linux/i2c-dev.h> // For I2C_SLAVE constant
-#include <i2c/smbus.h>
-#include <stdio.h>      // For printf/debugging
-#include <stdint.h>
+#include "i2c_master.h"
 
-int fd;
+
 //Opening handle for i2c device
-int init() {
+int I2C_init() {
     fd = open("/dev/i2c-1",O_RDWR);
     if(fd < 0) {
         perror("error");
@@ -33,9 +27,9 @@ int I2Cwrite(int fd,uint8_t device_addr,uint8_t reg_addr,uint8_t data) {
     return 0;
 }
 
-
+//request and response
 int I2Cread(int fd, uint8_t device_addr, uint8_t *reg_addr, uint8_t *data) {
-    
+
     if(ioctl(fd,I2C_SLAVE,device_addr) < 0) {
         perror("ioctl");
         return -1;
