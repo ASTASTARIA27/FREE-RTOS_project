@@ -12,31 +12,55 @@ uint8_t bcdTodec(uint8_t val) {
 
 
 int set_time(int seconds,int minutes,int hours) {
-    int sec,min,hr; //seconds minutes and hours
-    sec = decTobcd(seconds);
-    min = decTobcd(minutes);
-    hr = decTobcd(hours);
+    uint8_t buffer[3];
+    buffer[0] = decTobcd(seconds);
+    buffer[1] = decTobcd(minutes);
+    buffer[2] = decTobcd(hours);
     if(ioctl(fd,I2C_SLAVE,BASE_ADDRESS_DS3231) < 0) {
         perror("error");
         return -1;
     }
-    I2Cwrite(fd,BASE_ADDRESS_DS3231,SECONDS,sec);
-    I2Cwrite(fd,BASE_ADDRESS_DS3231,MINUTES,min);
-    I2Cwrite(fd,BASE_ADDRESS_DS3231,HOURS,hr);
+    I2Cwrite_mul(fd,BASE_ADDRESS_DS3231,SECONDS,buffer,3);
     return 0;
 }
 
 int get_time(int *seconds, int *minutes, int *hours) {
-    uint8_t sec,min,hr;
+    uint8_t  buffer[3];
     if(ioctl(fd,I2C_SLAVE,BASE_ADDRESS_DS3231) < 0) {
         perror("error");
         return -1;
     }
-    if(I2Cread(fd,BASE_ADDRESS_DS3231,SECONDS,&sec) != 0) return -1;
-    if(I2Cread(fd,BASE_ADDRESS_DS3231,MINUTES,&min) != 0) return -1;
-    if(I2Cread(fd,BASE_ADDRESS_DS3231,HOURS,&hr) !=0) return -1;
-    *seconds = bcdTodec(sec);
-    *minutes = bcdTodec(min);
-    *hours = bcdTodec(hr);
+    I2Cread_mul(fd,BASE_ADDRESS_DS3231,SECONDS,buffer,3);
+    *seconds = bcdTodec(buffer[0]);
+    *minutes = bcdTodec(buffer[1]);
+    *hours = bcdTodec(buffer[2]);
+    return 0;
+}
+
+int setDate(int Day, int Date, int Month, int Year) {
+    uint8_t buffer[4];
+    buffer[0] = decTobcd(Day);
+    buffer[1] = decTobcd(Date);
+    buffer[2] = decTobcd(Month);
+    buffer[3] = decTobcd(Year);
+    if(ioctl(fd,I2C_SLAVE,BASE_ADDRESS_DS3231) < 0) {
+        perror("error");
+        return -1;
+    }
+    I2Cwrite_mul(fd,BASE_ADDRESS_DS3231,DAY,buffer,4);
+    return 0;
+}
+
+int getDate(int *Day, int *Date,int *Month, int *Year) {
+    uint8_t buffer[4];
+    if(ioctl(fd,I2C_SLAVE,BASE_ADDRESS_DS3231) < 0) {
+        perror("error");
+        return -1;
+    }
+    I2Cread_mul(fd,BASE_ADDRESS_DS3231,DAY,buffer,4);
+    *Day = bcdTodec(buffer[0]);
+    *Date = bcdTodec(buffer[1]);
+    *Month = bcdTodec(buffer[2]& 0x7F); // 0x7F is 0111 1111, which ignores Bit 7(0 to 7)
+    *Year = bcdTodec(buffer[3]);
     return 0;
 }

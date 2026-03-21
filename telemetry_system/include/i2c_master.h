@@ -13,5 +13,7 @@ extern int fd;
 int I2C_init();
 int I2Cwrite(int fd,uint8_t device_addr,uint8_t reg_addr,uint8_t data);
 int I2Cread(int fd, uint8_t device_addr, uint8_t reg_addr, uint8_t *data);
+int I2Cwrite_mul(int fd, uint8_t device_addr, uint8_t reg_addr, uint8_t *data, int len);
+int I2Cread_mul(int fd,uint8_t device_addr, uint8_t reg_addr, uint8_t *data, int len);
 
 #endif
