@@ -27,6 +27,7 @@ int I2Cwrite(int fd,uint8_t device_addr,uint8_t reg_addr,uint8_t data) {
     return 0;
 }
 
+
 //request and response
 int I2Cread(int fd, uint8_t device_addr, uint8_t reg_addr, uint8_t *data) {
 

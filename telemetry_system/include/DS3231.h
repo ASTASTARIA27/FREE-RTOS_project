@@ -22,4 +22,6 @@
 //function declarations
 uint8_t decTobcd(uint32_t val);
 uint8_t bcdTodec(uint32_t val);
+int set_time(int seconds,int minutes,int hours);
+int get_time(int *seconds, int *minutes, int *hours);
 #endif
