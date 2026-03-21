@@ -11,6 +11,7 @@
 #include "i2c_master.h"
 
 //Macros definitions
+#define BASE_ADDRESS_ADXL 0x53
 #define DEVID 0x00
 #define POWER_CNTL 0x2D
 #define DATAX0 0x32
@@ -19,4 +20,8 @@
 #define DATAY1 0x35
 #define DATAZ0 0x36
 #define DATAZ1 0x37
+
+//function definitions
+int adxl_init();
+int adxl_read(int fd, int16_t *x, int16_t *y, int16_t *z);
 #endif

@@ -8,10 +8,10 @@
 #include <stdio.h>      // For printf/debugging
 #include <stdint.h>
 
-int fd;
+extern int fd;
 //function declarations
 int I2C_init();
 int I2Cwrite(int fd,uint8_t device_addr,uint8_t reg_addr,uint8_t data);
-int I2Cread(int fd, uint8_t device_addr, uint8_t *reg_addr, uint8_t *data);
+int I2Cread(int fd, uint8_t device_addr, uint8_t reg_addr, uint8_t *data);
 
 #endif
