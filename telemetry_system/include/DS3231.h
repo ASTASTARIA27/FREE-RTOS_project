@@ -13,7 +13,11 @@
 #define BASE_ADDRESS_DS3231 0x68
 #define SECONDS 0x00
 #define MINUTES 0x01
-#define HOUR 0x02
+#define HOURS 0x02
+#define DAY 0x03
+#define DATE 0x04
+#define MONTH 0x05
+#define YEAR 0x06
 
 //function declarations
 uint8_t decTobcd(uint32_t val);
