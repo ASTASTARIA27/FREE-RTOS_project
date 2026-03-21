@@ -1,6 +1,5 @@
 #include "adxl.h"
 
-
 /*
 The ADXL345 starts in "Standby" mode.
 switch the standby mode using pwr cntrl register(0x2D) to wake up we need to use 
