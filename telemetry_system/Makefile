@@ -58,7 +58,7 @@ $(OBJDIR):
 # Link the final application
 # Note: -lpthread and -lrt are required for the Linux Posix Port
 $(TARGET): $(OBJECTS)
-	$(CC) $(CFLAGS) -o $@ $(OBJECTS) -lpthread -lrt -lm
+	$(CC) $(CFLAGS) -o $@ $(OBJECTS) -lpthread -lrt -lm -lgpiod
 
 # Compile rule for all object files
 $(OBJDIR)/%.o: %.c

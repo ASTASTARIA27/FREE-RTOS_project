@@ -6,11 +6,13 @@
 #include "task.h"
 #include "semphr.h"
 #include <stdbool.h>
+#include <gpiod.h>
 #define TRUE 1
 #define FALSE 0
-
+/*--------------*/
 //key to the I2C bus
 SemaphoreHandle_t xI2CMutex;
+
 
 //creating the shutdown
 SemaphoreHandle_t xShutdownSemaphore;
@@ -38,6 +40,49 @@ void vshutdownTask (void *pvParameter) {
         if(xSemaphoreTake(xShutdownSemaphore,portMAX_DELAY)==pdTRUE) {
             shutdown();
         }
+    }
+}
+
+void vISRTask (void *pvParameter) {
+    (void)pvParameter;
+    /*for INterrunpt service routine*/
+    struct gpiod_chip *chip;
+    struct gpiod_line *line;
+    struct gpiod_line_event event;
+    int result;
+    //open the gpio chip
+    chip = gpiod_chip_open_by_number(4);
+    if(!chip) {
+        perror("failed to open chip4\n");
+        vTaskDelete(NULL);
+    }
+    //get the specific line
+    line = gpiod_chip_get_line(chip,17);
+    if(!line) {
+        perror("failed to get in line\n");
+        gpiod_chip_close(chip);
+        vTaskDelete(NULL);
+    }
+    //request for rising edge events
+    //telling the linux the transition from 3.3v to 0
+    if(gpiod_line_request_rising_edge_events(line,"Shutdown") < 0) {
+        perror("Request Events failed");
+        gpiod_chip_close(chip);
+        vTaskDelete(NULL);
+    }
+    while(1) {
+        //wait for the event
+        //we wait a timeout of 1s and loopback to check again
+        struct timespec timeout = {1,0};
+        result = gpiod_line_event_wait(line, &timeout);
+        if(result > 0) {
+            //read the event to clear it
+            gpiod_line_event_read(line, &event);
+            printf("ISR enabled signalling shutdown\n");
+            //triggering the shutdown task
+            xSemaphoreGive(xShutdownSemaphore);
+        }
+        vTaskDelay(pdMS_TO_TICKS(10));
     }
 }
 
@@ -108,6 +153,7 @@ int main() {
         xTaskCreate(vtelemetryTask,"Telemetry",2048,NULL,2,&xTelemetryHandle);
         xTaskCreate(vclockTask,"Clock",2048,NULL,1,&xClockHandle);
         xTaskCreate(vshutdownTask,"Shutdown",2048,NULL,3,NULL);
+        xTaskCreate(vISRTask,"Button",2048,NULL,4,NULL);
         //Start the scheduler now (control goes to the freeRtos)
         vTaskStartScheduler();
     }
