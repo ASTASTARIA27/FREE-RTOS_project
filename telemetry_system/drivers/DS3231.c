@@ -7,11 +7,11 @@ uint8_t decTobcd(uint8_t val) {
 }
 
 uint8_t bcdTodec(uint8_t val) {
-    return ((val>>4)*10) + (val%16);
+    return ((val>>4)*10) + (val&0x0F);
 }
 
 
-int set_time(int seconds,int minutes,int hours) {
+int set_time(int fd,int seconds,int minutes,int hours) {
     uint8_t buffer[3];
     buffer[0] = decTobcd(seconds);
     buffer[1] = decTobcd(minutes);
@@ -24,7 +24,7 @@ int set_time(int seconds,int minutes,int hours) {
     return 0;
 }
 
-int get_time(int *seconds, int *minutes, int *hours) {
+int get_time(int fd,int *seconds, int *minutes, int *hours) {
     uint8_t  buffer[3];
     if(ioctl(fd,I2C_SLAVE,BASE_ADDRESS_DS3231) < 0) {
         perror("error");
@@ -37,7 +37,7 @@ int get_time(int *seconds, int *minutes, int *hours) {
     return 0;
 }
 
-int setDate(int Day, int Date, int Month, int Year) {
+int setDate(int fd,int Day, int Date, int Month, int Year) {
     uint8_t buffer[4];
     buffer[0] = decTobcd(Day);
     buffer[1] = decTobcd(Date);
@@ -51,7 +51,7 @@ int setDate(int Day, int Date, int Month, int Year) {
     return 0;
 }
 
-int getDate(int *Day, int *Date,int *Month, int *Year) {
+int getDate(int fd,int *Day, int *Date,int *Month, int *Year) {
     uint8_t buffer[4];
     if(ioctl(fd,I2C_SLAVE,BASE_ADDRESS_DS3231) < 0) {
         perror("error");
@@ -62,5 +62,27 @@ int getDate(int *Day, int *Date,int *Month, int *Year) {
     *Date = bcdTodec(buffer[1]);
     *Month = bcdTodec(buffer[2]& 0x7F); // 0x7F is 0111 1111, which ignores Bit 7(0 to 7)
     *Year = bcdTodec(buffer[3]);
+    return 0;
+}
+
+int setAlarm1(int fd,int seconds, int minutes, int hours, int day) {
+    uint8_t value1, value2;
+    uint8_t buffer[4];
+    //enabling alarm1 in the control register
+    if(ioctl(fd,I2C_SLAVE,BASE_ADDRESS_DS3231) < 0) {
+        perror("error");
+        return -1;
+    }
+   I2Cread(fd,BASE_ADDRESS_DS3231,CONTROL,&value1);
+   I2Cread(fd,BASE_ADDRESS_DS3231,CNTL_STATUS,&value2);
+   value1 |=0x05; 
+   value2 &=~(0x01);
+   I2Cwrite(fd,BASE_ADDRESS_DS3231,CONTROL,value1); //now alarm1 enabled
+   I2Cwrite(fd,BASE_ADDRESS_DS3231,CNTL_STATUS,value2);
+   buffer[0] = (decTobcd(seconds)) & 0x7F;
+   buffer[1] = (decTobcd(minutes)) | 0x80;
+   buffer[2] = (decTobcd(hours)) | 0x80;
+   buffer[3] = (decTobcd(day)) | 0x80;
+   I2Cwrite_mul(fd,BASE_ADDRESS_DS3231,ALARM1_SECONDS,buffer,4);
     return 0;
 }

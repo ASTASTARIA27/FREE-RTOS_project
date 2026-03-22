@@ -31,7 +31,7 @@ int I2Cwrite_mul(int fd, uint8_t device_addr, uint8_t reg_addr, uint8_t *data, i
     uint8_t buffer[len+1];
     buffer[0] = reg_addr;
     for(int i=0; i<len; i++) {
-        buffer[len+i] = data[i];
+        buffer[i+1] = data[i];
     }
     if(ioctl(fd,I2C_SLAVE,device_addr) < 0) {
         perror("error");

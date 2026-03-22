@@ -18,11 +18,19 @@
 #define DATE 0x04
 #define MONTH 0x05
 #define YEAR 0x06
+#define CONTROL 0x0E
+#define CNTL_STATUS 0x0F
+#define ALARM1_SECONDS 0x07
+#define ALARM1_MINUTES 0x08
+#define ALARM1_HOUR 0x09
+#define ALARM1_DAY 0x0A
 
 //function declarations
-uint8_t decTobcd(uint32_t val);
-uint8_t bcdTodec(uint32_t val);
-int set_time(int seconds,int minutes,int hours);
-int get_time(int *seconds, int *minutes, int *hours);
-int setDate(int Day, int Date, int Month, int Year);
+uint8_t decTobcd(uint8_t val);
+uint8_t bcdTodec(uint8_t val);
+int set_time(int fd,int seconds,int minutes,int hours);
+int get_time(int fd,int *seconds, int *minutes, int *hours);
+int setDate(int fd,int Day, int Date, int Month, int Year);
+int getDate(int fd,int *Day, int *Date,int *Month, int *Year);
+int setAlarm1(int fd,int seconds, int minutes, int hours, int day);
 #endif
