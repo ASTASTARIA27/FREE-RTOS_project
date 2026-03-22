@@ -2,6 +2,40 @@
 #include "adxl.h"
 #include "DS3231.h"
 #include <unistd.h>
+#include "FreeRTOS.h"
+#include "task.h"
+#include "semphr.h"
+
+SemaphoreHandle_t xI2CMutex; //key to the I2C bus
+//for adxl
+//try to take the key and wait forever(portMAX_Delay) if someone else has it
+void vtelemetryTask (void *pvParameter) {
+    int16_t x,y,z;
+    while(1) {
+        if(xSemaphoreTake(xI2CMutex,portMAX_DELAY)==pdTRUE) {
+            adxl_read(fd,&x,&y,&z); //use the bus safely
+            xSemaphoreGive(xI2CMutex); //give the key immediately
+            printf("X:%d | Y:%d | Z:%d\n",x,y,z);
+        }
+        //sleep for 100ms
+        vTaskDelay(pdMS_TO_TICKS(100));
+    }
+}
+
+//forDS3231
+//pv pointer to void
+void vclockTask (void *pvParameter) {
+    int h,m,s;
+    while(1) {
+        if(xSemaphoreTake(xI2CMutex,portMAX_DELAY)==pdTRUE){
+            get_time(fd,&s,&m,&h);
+            xSemaphoreGive(xI2CMutex);
+            printf("H:%02d | M:%02d | S:%02d\n",h,m,s);
+        }
+        //sleep for 1 second
+        vTaskDelay(pdMS_TO_TICKS(1000));
+    }
+}
 
 int main() {
     fd = I2C_init();
@@ -13,29 +47,23 @@ int main() {
     }
     printf("ADXL initialized succesfully");
 
-    //simple loop to read the data
-    int16_t x,y,z;
-    for(int i=0; i<10; i++) {
-        adxl_read(fd,&x,&y,&z);
-        printf("X:%d | Y:%d | Z:%d\n",x,y,z);
-        usleep(100000); //sleep 100ms
-    }
     //DS3231
+    //DIsabling Oscillator stop flags so clock runs
     uint8_t status;
     I2Cread(fd,BASE_ADDRESS_DS3231,CNTL_STATUS,&status);
     status &= ~0x80; 
     I2Cwrite(fd,BASE_ADDRESS_DS3231,CNTL_STATUS,status);
-    if (set_time(fd,0, 50, 12) == 0) {
-    printf("Time set successfully!\n");
-    } else {
-        printf("Failed to set time!\n");
+
+    //creating the Mutex
+    xI2CMutex = xSemaphoreCreateMutex();
+    if(xI2CMutex != NULL) {
+        //Create the telemetry task
+        xTaskCreate(vtelemetryTask,"Telemetry",2048,NULL,2,NULL);
+        xTaskCreate(vclockTask,"Clock",2048,NULL,1,NULL);
+        //Start the scheduler now (control goes to the freeRtos)
+        vTaskStartScheduler();
     }
-    //simple loop to read data
-    int a,b,c;
-    for(int i=0; i<10; i++) {
-        get_time(fd,&a,&b,&c);
-        printf("H:%02d | M:%02d | S:%02d\n",c,b,a);
-        usleep(1000000);
-    }
+    for(;;);
+
     return 0;
 }
