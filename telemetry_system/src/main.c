@@ -22,7 +22,7 @@ void vtelemetryTask (void *pvParameter) {
         //sleep for 100ms
         //vTaskDelay(pdMS_TO_TICKS(100));
         vTaskDelayUntil(&xLastTickTime,xFrequency); //looks at lasttick time and calculates how much time its need to hit the next 100ms perfectly
-    
+     
     }
 }
 
