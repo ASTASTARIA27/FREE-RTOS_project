@@ -11,6 +11,8 @@ SemaphoreHandle_t xI2CMutex; //key to the I2C bus
 //try to take the key and wait forever(portMAX_Delay) if someone else has it
 void vtelemetryTask (void *pvParameter) {
     int16_t x,y,z;
+    TickType_t xLastTickTime = xTaskGetTickCount();
+    const TickType_t xFrequency = pdMS_TO_TICKS(100);
     while(1) {
         if(xSemaphoreTake(xI2CMutex,portMAX_DELAY)==pdTRUE) {
             adxl_read(fd,&x,&y,&z); //use the bus safely
@@ -18,7 +20,9 @@ void vtelemetryTask (void *pvParameter) {
             printf("X:%d | Y:%d | Z:%d\n",x,y,z);
         }
         //sleep for 100ms
-        vTaskDelay(pdMS_TO_TICKS(100));
+        //vTaskDelay(pdMS_TO_TICKS(100));
+        vTaskDelayUntil(&xLastTickTime,xFrequency); //looks at lasttick time and calculates how much time its need to hit the next 100ms perfectly
+    
     }
 }
 
