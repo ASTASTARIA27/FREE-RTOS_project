@@ -79,6 +79,11 @@ int setAlarm1(int fd,int seconds, int minutes, int hours, int day) {
    value2 &=~(0x01);
    I2Cwrite(fd,BASE_ADDRESS_DS3231,CONTROL,value1); //now alarm1 enabled
    I2Cwrite(fd,BASE_ADDRESS_DS3231,CNTL_STATUS,value2);
+   /*Each alarm register has bit 7 = AxMx (mask bit)
+   meaning 0  Match this field
+   meaning 1 Ignore this field
+   ignoring minutes,hours,day except seconds
+   so alarm fires at everyminute at that second */
    buffer[0] = (decTobcd(seconds)) & 0x7F;
    buffer[1] = (decTobcd(minutes)) | 0x80;
    buffer[2] = (decTobcd(hours)) | 0x80;

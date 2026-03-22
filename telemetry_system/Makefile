@@ -1,7 +1,18 @@
 # Compiler and Flags
 CC = gcc
-# -I./include tells the compiler to look for .h files there
-CFLAGS = -Wall -Wextra -I./include -g
+
+# Define the path to your FreeRTOS folder
+FREERTOS_DIR = /home/vamsi/my_rtos_project/FreeRTOS/FreeRTOS
+FREERTOS_SRC = $(FREERTOS_DIR)/Source
+
+# Include Paths
+# 1. Your local headers
+# 2. FreeRTOS Core headers
+# 3. FreeRTOS POSIX Port headers
+CFLAGS = -Wall -Wextra -g \
+         -I./include \
+         -I$(FREERTOS_SRC)/include \
+         -I$(FREERTOS_SRC)/portable/ThirdParty/GCC/Posix
 
 # Target binary name
 TARGET = telemetry_app
@@ -11,32 +22,48 @@ SRCDIR = src
 DRVDIR = drivers
 OBJDIR = obj
 
-# Use this to find all .c files in src and drivers
-SOURCES = $(wildcard $(SRCDIR)/*.c) $(wildcard $(DRVDIR)/*.c)
+# 1. Collect your project sources (Local)
+LOCAL_SOURCES = $(wildcard $(SRCDIR)/*.c) $(wildcard $(DRVDIR)/*.c)
 
-# This line converts those .c paths into obj/*.o names
-# The 'notdir' can sometimes cause duplicates if you have the same filename in two folders
-OBJECTS = $(patsubst %.c, $(OBJDIR)/%.o, $(notdir $(SOURCES)))
+# 2. Define the specific FreeRTOS Kernel sources needed
+RTOS_SOURCES = $(FREERTOS_SRC)/tasks.c \
+               $(FREERTOS_SRC)/list.c \
+               $(FREERTOS_SRC)/queue.c \
+               $(FREERTOS_SRC)/timers.c \
+               $(FREERTOS_SRC)/event_groups.c \
+               $(FREERTOS_SRC)/portable/ThirdParty/GCC/Posix/port.c \
+               $(FREERTOS_SRC)/portable/ThirdParty/GCC/Posix/utils/wait_for_event.c \
+               $(FREERTOS_SRC)/portable/MemMang/heap_3.c
 
-# Search paths for the compiler to find the .c files for the objects
-vpath %.c $(SRCDIR) $(DRVDIR)
+# Combine all sources into one list
+ALL_SOURCES = $(LOCAL_SOURCES) $(RTOS_SOURCES)
 
-# Default rule
+# 3. Generate the list of object files in the obj/ directory
+# This takes the filename of every .c file and puts it in the obj/ folder as .o
+OBJECTS = $(addprefix $(OBJDIR)/, $(notdir $(ALL_SOURCES:.c=.o)))
+
+# 4. Tell 'make' where to search for the .c files (vpath)
+vpath %.c $(SRCDIR) $(DRVDIR) $(FREERTOS_SRC) \
+          $(FREERTOS_SRC)/portable/ThirdParty/GCC/Posix \
+          $(FREERTOS_SRC)/portable/ThirdParty/GCC/Posix/utils \
+          $(FREERTOS_SRC)/portable/MemMang
+
+# --- Rules ---
+
 all: $(OBJDIR) $(TARGET)
 
-# Create the object directory if it doesn't exist
 $(OBJDIR):
 	mkdir -p $(OBJDIR)
 
-# Link the object files into the final executable
+# Link the final application
+# Note: -lpthread and -lrt are required for the Linux Posix Port
 $(TARGET): $(OBJECTS)
-	$(CC) $(CFLAGS) -o $@ $(OBJECTS)
+	$(CC) $(CFLAGS) -o $@ $(OBJECTS) -lpthread -lrt -lm
 
-# Compile .c files into .o files
+# Compile rule for all object files
 $(OBJDIR)/%.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
-# Clean up build files
 clean:
 	rm -rf $(OBJDIR) $(TARGET)
 

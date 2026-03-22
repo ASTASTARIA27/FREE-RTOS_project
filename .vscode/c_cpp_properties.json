@@ -4,7 +4,10 @@
             "name": "Linux",
             "includePath": [
                 "${default}",
-                "${workspaceFolder}/telemetry_system/include"
+                "${workspaceFolder}/telemetry_system/include",
+                "${workspaceFolder}/FreeRTOS/FreeRTOS/Source/include",
+                "${workspaceFolder}/FreeRTOS/FreeRTOS-Plus/Demo/FreeRTOS_Plus_TCP_Echo_Posix",
+                "${workspaceFolder}/FreeRTOS/FreeRTOS-Plus/Source/FreeRTOS-Plus-Trace/include"
             ],
             "defines": [],
             "cStandard": "c17",
